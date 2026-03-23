@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="login-bg flex flex-col items-center pt-6 md:pt-8 transition-colors px-4 min-h-screen">
+    <!-- Top Nav -->
+    <div class="w-full max-w-7xl px-2 sm:px-8 flex justify-between items-center mb-8 md:mb-12 mt-2">
+        <a href="{{ url_for('main.index') }}" class="text-brand-dark dark:text-white font-serif text-xl md:text-2xl font-bold tracking-tight hover:opacity-80 transition cursor-pointer">Clara<span class="font-sans text-lg ml-1 font-semibold">AI</span></a>
+        <div class="flex items-center space-x-3 md:space-x-6">
+            <button id="theme-toggle" class="flex items-center justify-center w-8 h-8 rounded-full bg-white dark:bg-[#161b22] shadow-sm border border-slate-200 dark:border-[#1d232c] transition cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800">
+                <span id="theme-icon" class="material-symbols-outlined text-slate-600 dark:text-slate-400 text-[18px]">dark_mode</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Card -->
+    <div class="relative w-full max-w-md z-10 mx-auto">
+        <div class="bg-white dark:bg-[#161b22] rounded-[2rem] p-8 md:p-12 shadow-2xl border border-slate-100 dark:border-[#1d232c] transition-colors relative overflow-hidden">
+            <div class="mb-10 w-full text-center">
+                <a href="{{ url_for('main.index') }}" class="inline-flex w-16 h-16 rounded-2xl bg-brand-dark dark:bg-blue-500 items-center justify-center text-white shrink-0 shadow-lg shadow-blue-900/20 mb-6 mx-auto cursor-pointer hover:scale-105 transition-transform">
+                    <span class="material-symbols-outlined text-[32px]">bolt</span>
+                </a>
+                <h1 class="font-serif text-3xl md:text-4xl text-brand-dark dark:text-white font-bold mb-3 tracking-tight">Verify Your Email</h1>
+                <p class="text-xs md:text-sm text-slate-500 dark:text-slate-400 font-medium">We securely sent a 6-digit initialization code to your provided email address.</p>
+                {% if error %}
+                <p class="text-[11px] md:text-xs text-red-500 bg-red-500/10 py-2 mt-4 rounded-lg font-bold">{{ error }}</p>
+                {% endif %}
+            </div>
+
+            <form action="{{ url_for('auth.verify_otp') }}" method="POST" class="space-y-6">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide text-center">Authentication Code</label>
+                    <input type="text" name="otp" placeholder="123456" class="w-full px-4 py-3 md:py-4 mt-2 rounded-xl md:rounded-2xl bg-slate-50 dark:bg-[#0d1117] border border-slate-200 dark:border-[#212833] text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-dark/20 dark:focus:ring-blue-500/50 transition placeholder-slate-400 dark:placeholder-slate-500 text-center text-2xl tracking-[0.5em] font-mono" maxlength="6" required autofocus>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-brand-dark dark:bg-blue-500 text-white font-bold text-[15px] py-4 rounded-xl md:rounded-2xl hover:bg-brand-light dark:hover:bg-blue-600 transition shadow-lg shadow-blue-900/20 active:scale-[0.98]">
+                        Log In
+                    </button>
+                </div>
+            </form>
+            
+            <div class="mt-8 text-center">
+                <p class="text-[11px] md:text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    Didn't receive the initialization ping? <a href="{{ url_for('auth.register') }}" class="text-brand-dark dark:text-blue-400 font-bold hover:underline">Reboot protocol</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
