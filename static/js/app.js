@@ -13,6 +13,28 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Global: Sidebar Toggle (Desktop Chevron)
+    const sidebarCollapseBtn = document.getElementById('sidebar-collapse-btn');
+    const sidebarCollapseIcon = document.getElementById('sidebar-collapse-icon');
+    
+    if (sidebarCollapseBtn && sidebarCollapseIcon) {
+        const updateSidebarIcon = (isCollapsed) => {
+            sidebarCollapseIcon.textContent = isCollapsed ? 'chevron_right' : 'chevron_left';
+        };
+
+        // Initialize icon state
+        updateSidebarIcon(document.documentElement.classList.contains('sidebar-collapsed'));
+
+        sidebarCollapseBtn.addEventListener('click', () => {
+            document.documentElement.classList.toggle('sidebar-collapsed');
+            const isCollapsed = document.documentElement.classList.contains('sidebar-collapsed');
+            localStorage.sidebarCollapsed = isCollapsed ? 'true' : 'false';
+            updateSidebarIcon(isCollapsed);
+        });
+    }
+
+
+
     // Global: Logout Modal
     const logoutModal = document.getElementById('logout-modal');
     const cancelBtn = document.getElementById('cancel-logout');

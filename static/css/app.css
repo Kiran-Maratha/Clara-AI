@@ -12,3 +12,31 @@ body { background-color: #f0f4f8; transition: background-color 0.3s ease, color 
 .sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
 .sidebar-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 .dark .sidebar-scroll::-webkit-scrollbar-thumb { background: #334155; }
+
+/* Global Sidebar Transition & Collapse */
+#sidebar {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-collapsed #sidebar {
+    width: 0;
+    opacity: 0;
+    pointer-events: none;
+    padding-left: 0;
+    padding-right: 0;
+    border-right-width: 0;
+}
+
+#sidebar-collapse-btn {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.sidebar-collapsed #sidebar-collapse-btn {
+    left: 12px;
+    opacity: 0.8;
+}
+
+.sidebar-collapsed #sidebar-collapse-btn:hover {
+    opacity: 1;
+}

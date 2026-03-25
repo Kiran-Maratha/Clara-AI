@@ -1,13 +1,21 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Configure marked for better link support and formatting
+    marked.setOptions({
+        gfm: true,
+        breaks: true,
+        headerIds: false,
+        mangle: false
+    });
+
     // Auto-expanding textarea logic
     const messageInput = document.getElementById('message-input');
     if (messageInput) {
-        messageInput.addEventListener('input', function() {
+        messageInput.addEventListener('input', function () {
             this.style.height = 'auto'; // Reset height to recalculate
             this.style.height = (this.scrollHeight) + 'px'; // Set new height based on content
         });
         // Handle Shift+Enter for new lines, Enter to submit
-        messageInput.addEventListener('keydown', function(e) {
+        messageInput.addEventListener('keydown', function (e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 if (this.value.trim() !== '') {
@@ -22,9 +30,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     cards.forEach(card => {
         card.addEventListener('click', () => {
+            const isSelected = card.classList.contains('ring-2');
+
+            // Clear all cards first
             cards.forEach(c => c.classList.remove('ring-2', 'ring-blue-500', 'bg-white', 'dark:ring-blue-500', 'dark:bg-[#111822]'));
-            card.classList.add('ring-2', 'ring-blue-500', 'bg-white', 'dark:ring-blue-500', 'dark:bg-[#111822]');
-            contextInput.value = card.dataset.context;
+            contextInput.value = '';
+
+            if (!isSelected) {
+                // Select this card if it wasn't already selected
+                card.classList.add('ring-2', 'ring-blue-500', 'bg-white', 'dark:ring-blue-500', 'dark:bg-[#111822]');
+                contextInput.value = card.dataset.context;
+            }
         });
     });
 
@@ -33,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeSidebarBtn = document.getElementById('close-sidebar-btn');
     const sidebar = document.getElementById('sidebar');
     const mobileOverlay = document.getElementById('mobile-overlay');
-    
+
     const toggleSidebar = () => {
         sidebar.classList.toggle('-translate-x-full');
         mobileOverlay.classList.toggle('hidden');
@@ -42,20 +58,20 @@ document.addEventListener('DOMContentLoaded', () => {
     if (mobileMenuBtn && sidebar && mobileOverlay) {
         mobileMenuBtn.addEventListener('click', toggleSidebar);
         mobileOverlay.addEventListener('click', toggleSidebar);
-        if(closeSidebarBtn) closeSidebarBtn.addEventListener('click', toggleSidebar);
+        if (closeSidebarBtn) closeSidebarBtn.addEventListener('click', toggleSidebar);
     }
 
     // Star toggle
     document.body.addEventListener('click', async (e) => {
         const btn = e.target.closest('.star-btn');
         if (!btn) return;
-        
+
         e.stopPropagation();
         const chatId = btn.dataset.chatId;
         const res = await fetch(`/api/chat/${chatId}/star`, { method: 'POST' });
         const data = await res.json();
         const icon = btn.querySelector('span');
-        
+
         if (data.starred) {
             icon.style.fontVariationSettings = "'FILL' 1";
             btn.classList.add('text-blue-500');
@@ -76,10 +92,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.addEventListener('click', (e) => {
         const btn = e.target.closest('.delete-chat-btn');
         if (!btn) return;
-        
+
         e.stopPropagation();
         chatToDelete = btn.dataset.chatId;
-        
+
         if (deleteModal) {
             deleteModal.classList.remove('hidden');
             setTimeout(() => {
@@ -103,15 +119,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (confirmDeleteBtn) {
         confirmDeleteBtn.addEventListener('click', async () => {
             if (!chatToDelete) return;
-            
+
             try {
                 const res = await fetch(`/api/chat/${chatToDelete}`, { method: 'DELETE' });
                 const data = await res.json();
-                
+
                 if (data.success) {
                     const item = document.querySelector(`.chat-item[data-chat-id="${chatToDelete}"]`);
                     if (item) item.remove();
-                    
+
                     // If we deleted the current chat or no chats left, redirect to new chat
                     if (chatToDelete == currentChatId || document.querySelectorAll('.chat-item').length === 0) {
                         window.location.href = '/';
@@ -147,20 +163,66 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function updateChatSidebar(chatId, title) {
+        let item = document.querySelector(`.chat-item[data-chat-id="${chatId}"]`);
+        if (item) {
+            // Update existing item title
+            const btn = item.querySelector('.chat-load-btn');
+            if (btn) btn.textContent = title;
+        } else {
+            // Add new item to top of list
+            const nav = document.getElementById('chat-nav');
+            if (!nav) return;
+
+            const newItemHtml = `
+                <div class="chat-item group flex items-center rounded-lg transition text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                    data-chat-id="${chatId}">
+                    <button class="chat-load-btn flex-1 text-left px-3 py-2.5 text-sm font-medium truncate" data-chat-id="${chatId}">
+                        ${title}
+                    </button>
+                    <div class="flex items-center space-x-0.5 opacity-0 group-hover:opacity-100 transition pr-1">
+                        <button class="star-btn flex items-center justify-center p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 transition text-slate-400 hover:text-blue-400"
+                            data-chat-id="${chatId}" data-starred="false">
+                            <span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 0">grade</span>
+                        </button>
+                        <button class="delete-chat-btn flex items-center justify-center p-1.5 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 transition"
+                            data-chat-id="${chatId}">
+                            <span class="material-symbols-outlined text-[18px]">delete</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+            nav.insertAdjacentHTML('afterbegin', newItemHtml);
+
+            // Re-attach load event to NEW button
+            const newBtn = nav.querySelector(`.chat-item[data-chat-id="${chatId}"] .chat-load-btn`);
+            if (newBtn) {
+                newBtn.addEventListener('click', async () => {
+                    currentChatId = chatId;
+                    highlightChatItem(chatId);
+                    const res = await fetch(`/api/chat/${chatId}/messages`);
+                    const data = await res.json();
+                    if (data.messages) renderMessages(data.messages);
+                });
+            }
+        }
+        highlightChatItem(chatId);
+    }
+
     function renderMessages(messages) {
         const chatHistory = document.getElementById('chat-history');
         const heroText = document.getElementById('hero-text');
         const suggestionCards = document.querySelector('.grid');
-        
+
         chatHistory.innerHTML = '';
         if (heroText) heroText.style.display = 'none';
         if (suggestionCards) suggestionCards.style.display = 'none';
-        
+
         messages.forEach(msg => {
             if (msg.sender === 'user') {
                 chatHistory.insertAdjacentHTML('beforeend', `
                     <div class="flex justify-end mb-4">
-                        <div class="bg-brand-dark dark:bg-blue-600 text-white px-4 py-2.5 rounded-2xl rounded-tr-sm text-sm max-w-[85%] lg:max-w-[75%] shadow-sm">${msg.content.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+                        <div class="bg-brand-dark dark:bg-blue-600 text-white px-4 py-2.5 rounded-2xl rounded-tr-sm text-sm max-w-[85%] lg:max-w-[75%] shadow-sm">${msg.content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
                     </div>`);
             } else {
                 const aiBubble = `
@@ -203,7 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const videoBtn = document.getElementById('video-btn');
     const previewContainer = document.getElementById('file-preview-container');
     const previewList = document.getElementById('file-preview-list');
-    
+
     let selectedFiles = [];
 
     if (attachBtn) {
@@ -232,7 +294,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 let displayIcon = 'description';
                 if (file.type.startsWith('image/')) displayIcon = 'image';
                 else if (file.type.startsWith('video/')) displayIcon = 'videocam';
-                
+
                 const el = document.createElement('div');
                 el.className = 'flex items-center space-x-2 bg-white dark:bg-[#1d232c] border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg shadow-sm';
                 el.innerHTML = `
@@ -262,7 +324,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatHistory = document.getElementById('chat-history');
     const heroText = document.getElementById('hero-text');
     const suggestionCards = document.querySelector('.grid');
-    
+
     if (chatForm && chatForm.getAttribute('method') === 'POST') {
         chatForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -270,13 +332,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const chatScroll = document.getElementById('chat-scroll');
             const message = input.value.trim();
             const context = document.getElementById('issue-context').value;
-            
+
             if (!message && selectedFiles.length === 0) return;
-            
+
             // Hide hero & suggestions for a cleaner chat view
             if (heroText) heroText.style.display = 'none';
             if (suggestionCards) suggestionCards.style.display = 'none';
-            
+
             // Show user message
             let attachmentPills = '';
             if (selectedFiles.length > 0) {
@@ -292,7 +354,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
             chatHistory.insertAdjacentHTML('beforeend', userBubble);
-            
+
             input.value = '';
             input.style.height = 'auto'; // Reset height
             const filesToSend = [...selectedFiles];
@@ -331,7 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 formData.append('message', message);
                 formData.append('issue_context', context);
                 if (currentChatId) formData.append('chat_id', currentChatId);
-                
+
                 filesToSend.forEach(file => {
                     formData.append('attachments', file);
                 });
@@ -340,9 +402,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     method: 'POST',
                     body: formData
                 });
-                
+
                 const data = await res.json();
-                
+
                 // Remove thinking indicator
                 const loader = document.getElementById(thinkingId);
                 if (loader) loader.remove();
@@ -381,6 +443,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     `;
                     chatHistory.insertAdjacentHTML('beforeend', aiBubble);
+
+                    // Update Sidebar Dynamic logic
+                    if (data.chat_id) {
+                        currentChatId = data.chat_id;
+                        if (data.title) {
+                            updateChatSidebar(data.chat_id, data.title);
+                        }
+                    }
+
                     document.querySelectorAll('pre code').forEach((block) => {
                         hljs.highlightElement(block);
                     });
@@ -418,7 +489,7 @@ document.addEventListener('DOMContentLoaded', () => {
             clearInterval(interval);
             const durations = originalText.split("").map((char) => char === " " ? 0 : Math.floor(Math.random() * 15) + 10);
             let frame = 0;
-            
+
             interval = setInterval(() => {
                 let finished = true;
                 tagline.innerText = originalText

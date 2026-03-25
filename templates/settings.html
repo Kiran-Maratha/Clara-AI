@@ -10,6 +10,7 @@
         </button>
         <a href="{{ url_for('main.index') }}" class="text-brand-dark dark:text-white font-serif text-xl md:text-2xl font-bold tracking-tight hover:opacity-80 transition cursor-pointer">Clara<span class="font-sans text-lg md:text-xl ml-1 font-semibold">AI</span></a>
     </div>
+
     <div class="flex items-center space-x-3 md:space-x-6">
         <button id="theme-toggle" class="flex items-center justify-center w-8 h-8 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer shrink-0">
             <span id="theme-icon" class="material-symbols-outlined text-[20px]">dark_mode</span>
@@ -44,6 +45,7 @@
             </button>
         </div>
 
+
         <a href="{{ url_for('main.index') }}" class="w-full bg-brand-dark dark:bg-blue-500 text-white rounded-xl py-2.5 flex items-center justify-center space-x-2 text-sm font-medium hover:shadow-md dark:hover:bg-blue-600 transition mb-5 shadow-sm shrink-0">
             <span class="material-symbols-outlined text-[18px]">add</span>
             <span>New Chat</span>
@@ -63,7 +65,7 @@
                         <button class="star-btn shrink-0 px-2 py-2 opacity-0 group-hover:opacity-100 transition
                             {% if chat.is_starred %}opacity-100 text-yellow-400{% else %}text-slate-400 hover:text-yellow-400{% endif %}"
                             data-chat-id="{{ chat.id }}" data-starred="{{ 'true' if chat.is_starred else 'false' }}">
-                            <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' {{ 1 if chat.is_starred else 0 }}">star</span>
+                            <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' {{ 1 if chat.is_starred else 0 }};">star</span>
                         </button>
                     </div>
                 {% endfor %}
@@ -102,6 +104,10 @@
             </div>
         </div>
     </div>
+
+    <button id="sidebar-collapse-btn" class="hidden md:flex absolute left-[240px] top-6 w-8 h-8 bg-white dark:bg-[#161b22] border border-slate-200 dark:border-[#1d232c] rounded-full items-center justify-center text-slate-400 hover:text-blue-500 shadow-lg z-[60] transition-all hover:scale-110">
+        <span class="material-symbols-outlined text-[20px]" id="sidebar-collapse-icon">chevron_left</span>
+    </button>
 
     <!-- Mobile overlay -->
     <div id="mobile-overlay" class="hidden md:hidden absolute inset-0 bg-slate-900/50 z-30 transition-opacity"></div>

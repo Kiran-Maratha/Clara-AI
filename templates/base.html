@@ -16,6 +16,12 @@
         } else {
             document.documentElement.classList.remove('dark');
         }
+        
+        // Sidebar preference - apply early to avoid flicker
+        if (localStorage.sidebarCollapsed === 'true') {
+            document.documentElement.classList.add('sidebar-collapsed');
+        }
+
     </script>
     <script>
         tailwind.config = {

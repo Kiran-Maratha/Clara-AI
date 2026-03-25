@@ -1,4 +1,5 @@
 /* Premium AI Message Styling */
+
 .ai-bubble-content h1, .ai-bubble-content h2, .ai-bubble-content h3 { font-family: 'Playfair Display', serif; font-weight: 700; margin: 1rem 0 0.5rem 0; color: #1e293b; }
 .dark .ai-bubble-content h1, .dark .ai-bubble-content h2, .dark .ai-bubble-content h3 { color: #f8fafc; }
 .ai-bubble-content p { margin-bottom: 0.75rem; }
@@ -12,7 +13,12 @@
 .ai-bubble-content th { background: #f8fafc; font-weight: 700; text-align: left; padding: 0.75rem; border-bottom: 1px solid #e2e8f0; }
 .dark .ai-bubble-content th { background: #0d1117; border-color: #1d232c; color: #93c5fd; }
 .ai-bubble-content td { padding: 0.75rem; border-bottom: 1px solid #f1f5f9; }
-.dark .ai-bubble-content td { border-color: #1d232c; }
+.ai-bubble-content td { border-color: #1d232c; }
+.ai-bubble-content a { color: #2563eb; text-decoration: underline; font-weight: 500; transition: color 0.2s; }
+.ai-bubble-content a:hover { color: #1d4ed8; }
+.dark .ai-bubble-content a { color: #60a5fa; }
+.dark .ai-bubble-content a:hover { color: #93c5fd; }
+
 
 /* Thinking Indicator */
 .typing-dot { width: 6px; height: 6px; border-radius: 50%; background: #3b82f6; animation: typing-bounce 1.4s infinite ease-in-out; }

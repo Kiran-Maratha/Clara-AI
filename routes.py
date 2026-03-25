@@ -194,6 +194,12 @@ def chat():
         chat_session = Chat.query.filter_by(id=chat_id, user_id=g.user.id).first()
         if not chat_session:
             return jsonify({"error": "Chat session not found."}), 404
+            
+        # Update title if it was a "New Chat" and we now have a better user message
+        if chat_session.title == "New Chat" and user_message:
+            new_title = user_message[:50] + "..." if len(user_message) > 50 else user_message
+            chat_session.title = new_title
+            db.session.commit()
     else:
         chat_title = user_message[:50] + "..." if len(user_message) > 50 else (attachment_labels[0] if attachment_labels else "New Chat")
         chat_session = Chat(user_id=g.user.id, title=chat_title)
@@ -214,7 +220,7 @@ def chat():
     from ai_service import analyze_request, generate_response
     
     # Bot 1: Analysis
-    structured_json = analyze_request(db_message, media=file_paths if file_paths else None, issue_context=issue_context)
+    structured_json = analyze_request(db_message, media=file_paths if file_paths else None, issue_context=issue_context, chat_history_text=chat_history_text)
     if not structured_json:
         structured_json = '{"intent": "Unknown", "core_questions": [], "extracted_context": "None"}'
         
@@ -235,7 +241,8 @@ def chat():
     
     return jsonify({
         "response": ai_response,
-        "chat_id": chat_session.id
+        "chat_id": chat_session.id,
+        "title": chat_session.title
     })
 
 @main_bp.route('/api/chat/<int:chat_id>/star', methods=['POST'])
