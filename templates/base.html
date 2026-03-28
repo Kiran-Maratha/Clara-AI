@@ -88,6 +88,48 @@
         </div>
     </div>
 
+    <!-- Remove Profile Picture Modal -->
+    <div id="remove-pic-modal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity opacity-0 flex">
+        <div class="bg-white dark:bg-[#161b22] w-full max-w-sm rounded-[2rem] shadow-2xl p-8 border border-slate-200 dark:border-[#1d232c] transform scale-95 transition-transform duration-300">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-red-50 dark:bg-red-500/10 rounded-2xl flex items-center justify-center text-red-500 mx-auto mb-6">
+                    <span class="material-symbols-outlined text-[32px]">no_photography</span>
+                </div>
+                <h2 class="font-serif text-2xl text-brand-dark dark:text-white font-bold mb-2 tracking-tight">Remove Picture?</h2>
+                <p class="text-xs md:text-sm text-slate-500 dark:text-slate-400 font-medium mb-8 leading-relaxed">do you want to remove profile picture?</p>
+                
+                <div class="space-y-3">
+                    <button id="confirm-remove-pic" class="block w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3.5 rounded-2xl transition shadow-lg shadow-red-500/20 active:scale-[0.98] text-sm">Remove</button>
+                    <button id="cancel-remove-pic" class="block w-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold py-3.5 rounded-2xl transition hover:bg-slate-200 dark:hover:bg-slate-700 text-sm">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <form id="remove-pic-form" action="{{ url_for('main.remove_profile_pic') }}" method="POST" class="hidden">
+        <input type="hidden" name="confirm" value="true">
+    </form>
+
+    <!-- Delete Account Modal -->
+    <div id="delete-account-modal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity opacity-0 flex">
+        <div class="bg-white dark:bg-[#161b22] w-full max-w-sm rounded-[2rem] shadow-2xl p-8 border border-slate-200 dark:border-[#1d232c] transform scale-95 transition-transform duration-300">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-red-50 dark:bg-red-500/10 rounded-2xl flex items-center justify-center text-red-600 mx-auto mb-6">
+                    <span class="material-symbols-outlined text-[32px]">warning</span>
+                </div>
+                <h2 class="font-serif text-2xl text-brand-dark dark:text-white font-bold mb-2 tracking-tight">Delete Account?</h2>
+                <p class="text-xs md:text-sm text-slate-500 dark:text-slate-400 font-medium mb-8 leading-relaxed">are you sure you want to delete your account? This action cannot be undone.</p>
+                
+                <div class="space-y-3">
+                    <button id="confirm-delete-account" class="block w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-2xl transition shadow-lg shadow-red-600/20 active:scale-[0.98] text-sm">Delete Everything</button>
+                    <button id="cancel-delete-account" class="block w-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold py-3.5 rounded-2xl transition hover:bg-slate-200 dark:hover:bg-slate-700 text-sm">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <form id="delete-account-form" action="{{ url_for('main.delete_account') }}" method="POST" class="hidden">
+        <input type="hidden" name="confirm" value="true">
+    </form>
+
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>

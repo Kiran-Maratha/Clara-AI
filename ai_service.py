@@ -1,5 +1,6 @@
 import os
 import logging
+import time
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
@@ -10,6 +11,7 @@ ai_logger = logging.getLogger('ai_logger')
 
 _client = None
 
+# Initializes the Gemini API client using the environment's security key.
 def initialize_gemini():
     global _client
     if _client:
@@ -23,10 +25,8 @@ def initialize_gemini():
     _client = genai.Client(api_key=api_key)
     return _client
 
+# Translates multimodal user input and chat history into a structured JSON intent format.
 def analyze_request(prompt, media=None, issue_context="General IT Support", chat_history_text=""):
-    """
-    Bot 1: Analyzes the raw user prompt/media and produces structured JSON.
-    """
     client = initialize_gemini()
     if not client:
         return None
@@ -51,20 +51,13 @@ def analyze_request(prompt, media=None, issue_context="General IT Support", chat
         prompt
     ]
 
-    
-    # Process local file paths via File API
     uploaded_files = []
     if media and isinstance(media, list):
         for file_path in media:
             try:
                 if os.path.exists(file_path):
-                    # For a premium experience, we could check if file is already active, 
-                    # but for simplicity, we'll upload each session.
                     uploaded_file = client.files.upload(file=file_path)
                     
-                    # For videos or large docs, we should wait until the file is 'ACTIVE'
-                    # The SDK v2 provides a streamlined way to wait.
-                    import time
                     max_retries = 10
                     while uploaded_file.state.name == 'PROCESSING' and max_retries > 0:
                         time.sleep(2)
@@ -89,7 +82,7 @@ def analyze_request(prompt, media=None, issue_context="General IT Support", chat
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
                 response_mime_type="application/json",
-                temperature=0.1 # Lower temp for more consistent JSON
+                temperature=0.1
             )
         )
         return response.text
@@ -97,10 +90,8 @@ def analyze_request(prompt, media=None, issue_context="General IT Support", chat
         ai_logger.error(f"Bot 1 Analysis Failed: {str(e)}")
         return None
 
+# Formulates a professional markdown response based on analyzed user intent and conversation history.
 def generate_response(structured_json, chat_history_text=""):
-    """
-    Bot 2: Consumes structured JSON from Bot 1 and generates a Clara AI markdown response.
-    """
     client = initialize_gemini()
     if not client:
         return "sorry ai currently offline, please check in later...."
@@ -108,7 +99,7 @@ def generate_response(structured_json, chat_history_text=""):
     answer_model = 'gemini-3.1-flash-lite-preview'
     
     system_instruction = f"""
-    You are Clara AI, an elite IT Support Chatbot operating within a premium enterprise environment.
+    You are Clara AI, your personal IT Support Chatbot.
     You answer intelligently, professionally, and succinctly in markdown format. 
     You have been provided with the user's analyzed intent via JSON natively. 
     Use this JSON explicitly to target their needs gracefully. Do NOT mention that you received JSON or were passed data from another bot.

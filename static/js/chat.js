@@ -11,8 +11,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const messageInput = document.getElementById('message-input');
     if (messageInput) {
         messageInput.addEventListener('input', function () {
-            this.style.height = 'auto'; // Reset height to recalculate
-            this.style.height = (this.scrollHeight) + 'px'; // Set new height based on content
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+            const maxHeight = parseInt(window.getComputedStyle(this).maxHeight);
+            this.style.overflowY = this.scrollHeight > maxHeight ? 'auto' : 'hidden';
         });
         // Handle Shift+Enter for new lines, Enter to submit
         messageInput.addEventListener('keydown', function (e) {
@@ -357,6 +359,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             input.value = '';
             input.style.height = 'auto'; // Reset height
+            input.style.overflowY = 'hidden'; // Reset overflow
             const filesToSend = [...selectedFiles];
             selectedFiles = [];
             renderPreviews();

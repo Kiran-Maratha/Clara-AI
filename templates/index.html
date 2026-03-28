@@ -184,10 +184,10 @@
         </div>
 
         <!-- Sticky Input Bar at bottom -->
-        <div class="shrink-0 px-4 md:px-8 pb-4 pt-2 border-t border-slate-200 dark:border-[#1d232c] bg-white dark:bg-[#0d1117] transition-colors relative">
+        <div class="shrink-0 px-2 md:px-8 pb-3 pt-2 border-t border-slate-200 dark:border-[#1d232c] bg-white dark:bg-[#0d1117] transition-colors relative">
             
             <!-- File Preview Container -->
-            <div id="file-preview-container" class="hidden absolute bottom-full left-0 w-full px-4 md:px-8 pb-3">
+            <div id="file-preview-container" class="hidden absolute bottom-full left-0 w-full px-2 md:px-8 pb-3">
                 <div class="flex flex-wrap gap-2 max-w-[56rem] mx-auto" id="file-preview-list">
                     <!-- Previews injected via JS -->
                 </div>
@@ -197,13 +197,14 @@
                 <input type="hidden" name="issue_context" id="issue-context" value="">
                 <input type="file" id="chat-file-input" name="attachments" multiple accept="image/*,video/*,.pdf,.txt,.csv" class="hidden">
                 
-                <div class="bg-slate-50 dark:bg-[#161b22] rounded-2xl border border-slate-300/80 dark:border-[#212833] p-1 flex items-end shadow-inner focus-within:ring-2 focus-within:ring-blue-500/50 dark:focus-within:ring-blue-500/30 transition shadow-sm">
-                    <textarea name="message" id="message-input" rows="1" placeholder="How can I assist your technical journey today?" class="flex-1 bg-transparent px-4 py-2.5 outline-none text-slate-800 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-500 font-medium text-sm md:text-base resize-none overflow-y-auto max-h-32 min-h-[44px] sidebar-scroll" style="border:none;"></textarea>
-                    <div class="flex items-center space-x-1 pr-1 pb-1 shrink-0">
-                        <button type="button" id="attach-btn" class="hidden sm:flex w-8 h-8 rounded-full items-center justify-center text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 transition"><span class="material-symbols-outlined text-[20px] opacity-80">attach_file</span></button>
-                        <button type="button" id="video-btn" class="hidden sm:flex w-8 h-8 rounded-full items-center justify-center text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 transition"><span class="material-symbols-outlined text-[20px] opacity-80">videocam</span></button>
-                        <button type="submit" id="send-btn" class="w-9 h-9 rounded-full bg-brand-dark dark:bg-blue-500 text-white flex items-center justify-center hover:shadow-lg dark:hover:bg-blue-600 transition ml-1 disabled:opacity-50 disabled:cursor-not-allowed">
-                            <span class="material-symbols-outlined text-[20px] relative left-[1px]">send</span>
+                <div class="bg-slate-50 dark:bg-[#161b22] rounded-2xl border border-slate-300/80 dark:border-[#212833] p-1 flex items-center shadow-inner focus-within:ring-2 focus-within:ring-blue-500/50 dark:focus-within:ring-blue-500/30 transition shadow-sm">
+                    <textarea name="message" id="message-input" rows="1" placeholder="How can I assist your technical journey today?" class="flex-1 bg-transparent pl-2.5 pr-1.5 py-2 outline-none text-slate-800 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-500 font-medium text-[12px] sm:text-sm md:text-base resize-none overflow-y-hidden max-h-32 min-h-[40px] sidebar-scroll" style="border:none;"></textarea>
+                    <div class="flex items-center pr-1 shrink-0">
+                        <div class="h-5 w-px bg-slate-300 dark:bg-slate-700 mx-0.5"></div>
+                        <button type="button" id="attach-btn" class="flex w-7 h-7 sm:w-8 sm:h-8 rounded-full items-center justify-center text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 transition"><span class="material-symbols-outlined text-[18px] opacity-80">attach_file</span></button>
+                        <button type="button" id="video-btn" class="flex w-7 h-7 sm:w-8 sm:h-8 rounded-full items-center justify-center text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 transition"><span class="material-symbols-outlined text-[18px] opacity-80">videocam</span></button>
+                        <button type="submit" id="send-btn" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-brand-dark dark:bg-blue-500 text-white flex items-center justify-center hover:shadow-lg dark:hover:bg-blue-600 transition ml-0.5 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span class="material-symbols-outlined text-[19px] relative left-[0.5px]">send</span>
                         </button>
                     </div>
                 </div>

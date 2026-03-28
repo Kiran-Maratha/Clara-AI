@@ -1,8 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Global: Theme Toggle
     const themeToggleBtn = document.getElementById('theme-toggle');
     const themeIcon = document.getElementById('theme-icon');
-    const updateIcon = (isDark) => { if(themeIcon) themeIcon.textContent = isDark ? 'light_mode' : 'dark_mode'; };
+    const updateIcon = (isDark) => { if (themeIcon) themeIcon.textContent = isDark ? 'light_mode' : 'dark_mode'; };
+    
+    // Manages the global light/dark theme persistence and icon state.
     if (themeToggleBtn) {
         updateIcon(document.documentElement.classList.contains('dark'));
         themeToggleBtn.addEventListener('click', () => {
@@ -13,16 +14,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Global: Sidebar Toggle (Desktop Chevron)
     const sidebarCollapseBtn = document.getElementById('sidebar-collapse-btn');
     const sidebarCollapseIcon = document.getElementById('sidebar-collapse-icon');
-    
+
+    // Controls the collapsible state of the navigation sidebar for desktop layouts.
     if (sidebarCollapseBtn && sidebarCollapseIcon) {
         const updateSidebarIcon = (isCollapsed) => {
             sidebarCollapseIcon.textContent = isCollapsed ? 'chevron_right' : 'chevron_left';
         };
 
-        // Initialize icon state
         updateSidebarIcon(document.documentElement.classList.contains('sidebar-collapsed'));
 
         sidebarCollapseBtn.addEventListener('click', () => {
@@ -33,55 +33,86 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-
-
-    // Global: Logout Modal
     const logoutModal = document.getElementById('logout-modal');
     const cancelBtn = document.getElementById('cancel-logout');
-    
-    const showLogoutModal = (e) => {
-        e.preventDefault();
-        if (!logoutModal) return;
-        logoutModal.classList.remove('hidden');
-        void logoutModal.offsetWidth; // Force reflow
-        logoutModal.classList.add('opacity-100');
-        const modalDiv = logoutModal.querySelector('div');
+    const removePicModal = document.getElementById('remove-pic-modal');
+    const cancelRemovePicBtn = document.getElementById('cancel-remove-pic');
+    const confirmRemovePicBtn = document.getElementById('confirm-remove-pic');
+
+    const deleteAccountModal = document.getElementById('delete-account-modal');
+    const cancelDeleteAccountBtn = document.getElementById('cancel-delete-account');
+    const confirmDeleteAccountBtn = document.getElementById('confirm-delete-account');
+
+    // Orchestrates the display transition for confirmation modals.
+    const showModal = (modal) => {
+        if (!modal) return;
+        modal.classList.remove('hidden');
+        void modal.offsetWidth;
+        modal.classList.add('opacity-100');
+        const modalDiv = modal.querySelector('div');
         if (modalDiv) {
             modalDiv.classList.remove('scale-95');
             modalDiv.classList.add('scale-100');
         }
     };
 
-    const hideLogoutModal = () => {
-        if (!logoutModal) return;
-        logoutModal.classList.remove('opacity-100');
-        const modalDiv = logoutModal.querySelector('div');
+    // Orchestrates the hiding transition for confirmation modals with a delay for animations.
+    const hideModal = (modal) => {
+        if (!modal) return;
+        modal.classList.remove('opacity-100');
+        const modalDiv = modal.querySelector('div');
         if (modalDiv) {
             modalDiv.classList.remove('scale-100');
             modalDiv.classList.add('scale-95');
         }
         setTimeout(() => {
-            logoutModal.classList.add('hidden');
+            modal.classList.add('hidden');
         }, 300);
     };
 
+    // Centralizes event delegation for modal triggers across the application.
     document.addEventListener('click', (e) => {
         if (e.target.closest('.logout-trigger')) {
-            showLogoutModal(e);
+            e.preventDefault();
+            showModal(logoutModal);
         }
+        if (e.target.closest('.remove-pic-trigger')) {
+            e.preventDefault();
+            showModal(removePicModal);
+        }
+        if (e.target.closest('.delete-account-trigger')) {
+            e.preventDefault();
+            showModal(deleteAccountModal);
+        }
+        if (e.target === logoutModal) hideModal(logoutModal);
+        if (e.target === removePicModal) hideModal(removePicModal);
+        if (e.target === deleteAccountModal) hideModal(deleteAccountModal);
     });
 
-    if (cancelBtn) cancelBtn.addEventListener('click', hideLogoutModal);
-    if (logoutModal) logoutModal.addEventListener('click', (e) => {
-        if (e.target === logoutModal) hideLogoutModal();
-    });
+    if (cancelBtn) cancelBtn.addEventListener('click', () => hideModal(logoutModal));
+    if (cancelRemovePicBtn) cancelRemovePicBtn.addEventListener('click', () => hideModal(removePicModal));
+    if (cancelDeleteAccountBtn) cancelDeleteAccountBtn.addEventListener('click', () => hideModal(deleteAccountModal));
 
-    // Global: disable autocomplete on all inputs
+    if (confirmRemovePicBtn) {
+        confirmRemovePicBtn.addEventListener('click', () => {
+            const form = document.getElementById('remove-pic-form');
+            if (form) form.submit();
+        });
+    }
+
+    if (confirmDeleteAccountBtn) {
+        confirmDeleteAccountBtn.addEventListener('click', () => {
+            const form = document.getElementById('delete-account-form');
+            if (form) form.submit();
+        });
+    }
+
+    // Disables browser native autocomplete for all user input fields to maintain security.
     document.querySelectorAll('input, textarea').forEach(el => {
         el.setAttribute('autocomplete', 'off');
     });
 
-    // Global: Per-field edit unlock (used in settings/profiles)
+    // Facilitates on-demand field unlocking for user profile editing.
     document.querySelectorAll('.edit-field-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const inputId = 'field-' + btn.dataset.target;
@@ -96,31 +127,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Global: password visibility toggle
+    // Injects a secure password visibility toggle into all designated password fields.
     document.querySelectorAll('input[type="password"]').forEach(input => {
-        // Skip if already wrapped
         if (input.parentElement.classList.contains('pw-wrapper')) return;
 
-        // Preserve original display style of parent
         const wrapper = document.createElement('div');
         wrapper.className = 'pw-wrapper';
         wrapper.style.cssText = 'position:relative; display:flex; align-items:center;';
         input.parentNode.insertBefore(wrapper, input);
         wrapper.appendChild(input);
 
-        // Ensure input fills the wrapper
         input.style.flex = '1';
         input.style.minWidth = '0';
         input.style.paddingRight = '2.5rem';
 
-        // Create the toggle button
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.style.cssText = 'position:absolute; right:0.75rem; top:50%; transform:translateY(-50%); display:flex; align-items:center; justify-content:center; background:none; border:none; cursor:pointer; padding:0; color:#94a3b8;';
         btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:20px;line-height:1;">visibility</span>';
         wrapper.appendChild(btn);
 
-        // Toggle logic
         btn.addEventListener('click', () => {
             const isHidden = input.type === 'password';
             input.type = isHidden ? 'text' : 'password';
@@ -133,19 +159,18 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('mouseleave', () => btn.style.color = input.type === 'text' ? '#64748b' : '#94a3b8');
     });
 
-    // Global: real-time password strength checker
+    // Provides real-time feedback on password complexity requirements during entry.
     const pwCheckTargets = ['new_password', 'password'];
     const rules = [
-        { label: 'At least 8 characters',        test: v => v.length >= 8 },
-        { label: 'One uppercase letter (A–Z)',    test: v => /[A-Z]/.test(v) },
-        { label: 'One number (0–9)',              test: v => /\d/.test(v) },
-        { label: 'One special character (!@#$%…)',test: v => /[!@#$%^&*()\-_=+\[\]{};':"\\|,.<>/?]/.test(v) },
+        { label: 'At least 8 characters', test: v => v.length >= 8 },
+        { label: 'One uppercase letter (A–Z)', test: v => /[A-Z]/.test(v) },
+        { label: 'One number (0–9)', test: v => /\d/.test(v) },
+        { label: 'One special character (!@#$%…)', test: v => /[!@#$%^&*()\-_=+\[\]{};':"\\|,.<>/?]/.test(v) },
     ];
 
     document.querySelectorAll('input[type="password"]').forEach(input => {
         if (!pwCheckTargets.includes(input.name)) return;
 
-        // Build the checklist container
         const checker = document.createElement('div');
         checker.style.cssText = 'display:none; margin-top:8px; padding:10px 12px; border-radius:10px; background:rgba(248,250,252,0.9); border:1px solid #e2e8f0; font-size:11px; line-height:1.6;';
         checker.className = 'pw-checker';

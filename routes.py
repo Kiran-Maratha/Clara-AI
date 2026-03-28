@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, jsonify, current_app, ses
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from models import db, User, Chat, Message
+from ai_service import analyze_request, generate_response
 import logging
 import os
 import re
@@ -18,6 +19,7 @@ PASSWORD_ERROR = "Password must be at least 8 characters and include an uppercas
 main_bp = Blueprint('main', __name__)
 auth_bp = Blueprint('auth', __name__)
 
+# Sends a secure 6-digit verification code to the user's email.
 def send_otp_email(to_email, otp):
     sender_email = os.getenv('GMAIL_EMAIL')
     sender_password = os.getenv('GMAIL_APP_PASSWORD')
@@ -47,23 +49,23 @@ def send_otp_email(to_email, otp):
         print(f"Error sending email: {e}")
         return False
 
+# Detects potential SQL injection or XSS patterns in input strings.
 def is_malicious(value):
     if not isinstance(value, str):
         return False
     val_lower = value.lower()
     
-    # Heuristic SQL injection check
     sqli_patterns = ['drop table', 'union select', 'delete from', ' or 1=1', 'truncate table']
     if any(p in val_lower for p in sqli_patterns):
         return True
         
-    # Heuristic XSS check
     xss_patterns = ['<script', 'javascript:', 'onload=', 'onerror=', 'document.cookie', 'eval(']
     if any(p in val_lower for p in xss_patterns):
         return True
         
     return False
 
+# Middleware to inspect all incoming POST/PUT/PATCH requests for malicious payloads.
 @main_bp.before_app_request
 def check_for_injections():
     if request.method in ['POST', 'PUT', 'PATCH']:
@@ -79,6 +81,7 @@ def check_for_injections():
                     if isinstance(value, str) and is_malicious(value):
                         return jsonify({"error": "Security exception: Malicious input detected (SQLi/XSS). Request blocked."}), 403
 
+# Loads the authorized user into the global context for the duration of the request.
 @main_bp.before_app_request
 def load_logged_in_user():
     user_id = session.get('user_id')
@@ -87,22 +90,22 @@ def load_logged_in_user():
     else:
         g.user = db.session.get(User, user_id)
 
+# Renders the primary landing page and chat dashboard.
 @main_bp.route('/')
 def index():
     return render_template('index.html')
 
+# Manages user profile updates and profile picture uploads.
 @main_bp.route('/settings', methods=['GET', 'POST'])
 def settings():
     if not g.user:
         return redirect(url_for('auth.login'))
         
     if request.method == 'POST':
-        # Safely acquire form items
         g.user.full_name = request.form.get('full_name', g.user.full_name)
         g.user.job_title = request.form.get('job_title', g.user.job_title)
         g.user.department = request.form.get('department', g.user.department)
         
-        # Handle file upload securely
         profile_file = request.files.get('profile_pic')
         if profile_file and profile_file.filename != '':
             filename = secure_filename(profile_file.filename)
@@ -118,6 +121,49 @@ def settings():
 
     return render_template('settings.html')
 
+# Removes the user's profile picture and deletes the file from the server.
+@main_bp.route('/settings/remove-pic', methods=['POST'])
+def remove_profile_pic():
+    if not g.user:
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    if g.user.profile_pic:
+        upload_dir = os.path.join(current_app.root_path, 'static', 'uploads')
+        file_path = os.path.join(upload_dir, g.user.profile_pic)
+        if os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+            except Exception as e:
+                current_app.logger.error(f"Error removing file {file_path}: {e}")
+    
+    g.user.profile_pic = None
+    db.session.commit()
+    return redirect(url_for('main.settings'))
+
+# Permanently deletes the user account, associated files, and all chat history.
+@main_bp.route('/settings/delete-account', methods=['POST'])
+def delete_account():
+    if not g.user:
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    user = g.user
+    
+    if user.profile_pic:
+        upload_dir = os.path.join(current_app.root_path, 'static', 'uploads')
+        file_path = os.path.join(upload_dir, user.profile_pic)
+        if os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+            except Exception as e:
+                current_app.logger.error(f"Error removing file {file_path} during account deletion: {e}")
+
+    db.session.delete(user)
+    db.session.commit()
+    session.clear()
+    
+    return redirect(url_for('main.index'))
+
+# Facilitates secure password updates via OTP verification.
 @main_bp.route('/change-password', methods=['GET', 'POST'])
 def change_password():
     if not g.user:
@@ -148,6 +194,7 @@ def change_password():
         
     return render_template('change_password.html')
 
+# Processes incoming chat messages, manages history, and generates AI responses.
 @main_bp.route('/api/chat', methods=['POST'])
 def chat():
     if not g.user:
@@ -164,7 +211,6 @@ def chat():
     chat_id = data.get('chat_id')
     issue_context = data.get('issue_context', '').strip() or 'General IT Support'
     
-    # Process file attachments
     attachments = request.files.getlist('attachments')
     file_paths = []
     attachment_labels = []
@@ -184,7 +230,6 @@ def chat():
     if not user_message and not attachments:
         return jsonify({"error": "Message or attachment required."}), 400
         
-    # Append labels so it renders in history UI
     db_message = user_message
     if attachment_labels:
         files_str = ", ".join(attachment_labels)
@@ -195,7 +240,6 @@ def chat():
         if not chat_session:
             return jsonify({"error": "Chat session not found."}), 404
             
-        # Update title if it was a "New Chat" and we now have a better user message
         if chat_session.title == "New Chat" and user_message:
             new_title = user_message[:50] + "..." if len(user_message) > 50 else user_message
             chat_session.title = new_title
@@ -217,17 +261,12 @@ def chat():
         history_lines.append(f"{sender_label} {msg.content}")
     chat_history_text = "\n".join(history_lines)
     
-    from ai_service import analyze_request, generate_response
-    
-    # Bot 1: Analysis
     structured_json = analyze_request(db_message, media=file_paths if file_paths else None, issue_context=issue_context, chat_history_text=chat_history_text)
     if not structured_json:
         structured_json = '{"intent": "Unknown", "core_questions": [], "extracted_context": "None"}'
         
-    # Bot 2: Response Generation
     ai_response = generate_response(structured_json, chat_history_text)
     
-    # If the response is the specific offline/rate-limit message, return as error rather than storing
     if "sorry ai currently offline" in ai_response or "RESOURCE_EXHAUSTED" in ai_response:
         error_msg = "ai is currently handling too many requests. please wait a moment before trying again." if "RESOURCE_EXHAUSTED" in ai_response else ai_response
         return jsonify({
@@ -245,6 +284,7 @@ def chat():
         "title": chat_session.title
     })
 
+# Toggles the starred status for a specific chat session.
 @main_bp.route('/api/chat/<int:chat_id>/star', methods=['POST'])
 def star_chat(chat_id):
     if not g.user:
@@ -256,6 +296,7 @@ def star_chat(chat_id):
     db.session.commit()
     return jsonify({"starred": chat_session.is_starred})
 
+# Permanently deletes a specific chat session and all its messages.
 @main_bp.route('/api/chat/<int:chat_id>', methods=['DELETE'])
 def delete_chat(chat_id):
     if not g.user:
@@ -268,6 +309,7 @@ def delete_chat(chat_id):
     db.session.commit()
     return jsonify({"success": True})
 
+# Retrieves the full message history for a given chat session.
 @main_bp.route('/api/chat/<int:chat_id>/messages', methods=['GET'])
 def get_chat_messages(chat_id):
     if not g.user:
@@ -281,6 +323,7 @@ def get_chat_messages(chat_id):
     ]
     return jsonify({"messages": messages, "title": chat_session.title})
 
+# Authenticates users and initiates the 2FA cycle via email.
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -288,20 +331,26 @@ def login():
         password = request.form.get('password')
         
         if not email or not EMAIL_REGEX.match(email):
-            return redirect(url_for('auth.login'))
+            return render_template('login.html', register=False, error="Please enter a valid email address.")
             
         user = User.query.filter_by(email=email).first()
-        if user and check_password_hash(user.password, password):
-            otp = str(random.randint(100000, 999999))
-            session['pending_user_id'] = user.id
-            session['otp'] = otp
-            session['otp_time'] = time.time()
-            session['otp_action'] = 'login'
-            send_otp_email(email, otp)
-            return redirect(url_for('auth.verify_otp'))
+        if not user:
+            return render_template('login.html', register=False, error="Email doesn't exist")
+            
+        if not check_password_hash(user.password, password):
+            return render_template('login.html', register=False, error="Incorrect password")
+            
+        otp = str(random.randint(100000, 999999))
+        session['pending_user_id'] = user.id
+        session['otp'] = otp
+        session['otp_time'] = time.time()
+        session['otp_action'] = 'login'
+        send_otp_email(email, otp)
+        return redirect(url_for('auth.verify_otp'))
             
     return render_template('login.html', register=False)
 
+# Registers new users and triggers identity verification via email.
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -339,6 +388,7 @@ def register():
         return redirect(url_for('auth.verify_otp'))
     return render_template('login.html', register=True)
     
+# Validates the 6-digit verification code to complete login, registration, or reset flows.
 @auth_bp.route('/verify-otp', methods=['GET', 'POST'])
 def verify_otp():
     if 'otp' not in session:
@@ -391,6 +441,7 @@ def verify_otp():
         
     return render_template('verify_otp.html')
 
+# Orchestrates the forgotten password recovery flow through identity verification.
 @auth_bp.route('/reset-password', methods=['GET', 'POST'])
 def reset_password():
     step = 'email'
@@ -449,6 +500,7 @@ def reset_password():
         
     return render_template('reset_password.html', step=step)
     
+# Terminates the active session and signs the user out.
 @auth_bp.route('/logout')
 def logout():
     session.clear()

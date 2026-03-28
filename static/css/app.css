@@ -7,13 +7,14 @@ body { background-color: #f0f4f8; transition: background-color 0.3s ease, color 
 .dark .login-bg {
     background: radial-gradient(circle at center, #161b22 0%, #0d1117 100%);
 }
-/* Thin custom scrollbar for sidebar */
+
+/* Custom scrollbar aesthetics for sidebar navigation. */
 .sidebar-scroll::-webkit-scrollbar { width: 3px; }
 .sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
 .sidebar-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 .dark .sidebar-scroll::-webkit-scrollbar-thumb { background: #334155; }
 
-/* Global Sidebar Transition & Collapse */
+/* Structural transitions and collapse states for the desktop sidebar. */
 #sidebar {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -40,3 +41,25 @@ body { background-color: #f0f4f8; transition: background-color 0.3s ease, color 
 .sidebar-collapsed #sidebar-collapse-btn:hover {
     opacity: 1;
 }
+
+/* Keyframes and classes for non-blocking visual error feedback. */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+.error-shake {
+  animation: shake 0.6s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+.error-outline {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2) !important;
+}
+
+.dark .error-outline {
+  border-color: #f87171 !important;
+  box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.2) !important;
+}
+
