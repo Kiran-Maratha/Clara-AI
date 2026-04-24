@@ -3,6 +3,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from models import db, Admin, Message, Chat, User
 import os
+import random
+import time
+from routes import send_otp_email
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -26,12 +29,44 @@ def login():
         
         admin = Admin.query.filter_by(email=email).first()
         if admin and check_password_hash(admin.password, password):
-            session['admin_id'] = admin.id
-            return redirect(url_for('admin.dashboard'))
+            otp = str(random.randint(100000, 999999))
+            session['pending_admin_id'] = admin.id
+            session['admin_otp'] = otp
+            session['admin_otp_time'] = time.time()
+            
+            if send_otp_email(email, otp):
+                return redirect(url_for('admin.verify_otp'))
+            else:
+                error = "Failed to send verification email. Please check your network connection."
+                session.pop('admin_otp', None)
         else:
             error = "Invalid admin credentials."
             
     return render_template('admin_login.html', error=error)
+
+@admin_bp.route('/verify-otp', methods=['GET', 'POST'])
+def verify_otp():
+    if 'admin_otp' not in session:
+        return redirect(url_for('admin.login'))
+        
+    error = None
+    if request.method == 'POST':
+        user_otp = request.form.get('otp')
+        
+        if time.time() - session.get('admin_otp_time', 0) > 600:
+            session.pop('admin_otp', None)
+            return render_template('admin_verify_otp.html', error="OTP expired. Please try again.")
+            
+        if user_otp == session['admin_otp']:
+            session['admin_id'] = session.get('pending_admin_id')
+            session.pop('admin_otp', None)
+            session.pop('pending_admin_id', None)
+            session.pop('admin_otp_time', None)
+            return redirect(url_for('admin.dashboard'))
+        else:
+            error = "Invalid authorization code."
+            
+    return render_template('admin_verify_otp.html', error=error)
 
 @admin_bp.route('/logout')
 def logout():
