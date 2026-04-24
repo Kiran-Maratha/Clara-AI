@@ -1,0 +1,206 @@
+{% extends "admin_base.html" %}
+
+{% block content %}
+<div class="flex h-screen bg-slate-100">
+    <!-- Sidebar -->
+    <div class="w-64 bg-admin-dark text-white flex flex-col shrink-0">
+        <div class="p-6 border-b border-slate-800">
+            <h2 class="font-serif text-2xl font-bold tracking-tight">Admin Console</h2>
+            <p class="text-xs text-slate-400 mt-1 font-medium">{{ g.admin.email }}</p>
+        </div>
+        <nav class="flex-1 p-4 space-y-2">
+            <button onclick="showTab('feedback-tab')" class="w-full flex items-center space-x-3 px-4 py-3 bg-indigo-500/20 text-indigo-400 rounded-xl transition nav-btn" id="nav-feedback-tab">
+                <span class="material-symbols-outlined">feedback</span>
+                <span class="font-medium text-sm">AI Feedback</span>
+            </button>
+            <button onclick="showTab('train-tab')" class="w-full flex items-center space-x-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition nav-btn" id="nav-train-tab">
+                <span class="material-symbols-outlined">model_training</span>
+                <span class="font-medium text-sm">Train AI (Knowledge)</span>
+            </button>
+            <button onclick="showTab('admins-tab')" class="w-full flex items-center space-x-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition nav-btn" id="nav-admins-tab">
+                <span class="material-symbols-outlined">shield_person</span>
+                <span class="font-medium text-sm">Manage Admins</span>
+            </button>
+        </nav>
+        <div class="p-4 border-t border-slate-800">
+            <a href="{{ url_for('admin.logout') }}" class="flex items-center space-x-3 px-4 py-3 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition">
+                <span class="material-symbols-outlined">logout</span>
+                <span class="font-medium text-sm">Logout</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 overflow-y-auto p-8">
+        {% if error %}
+        <div class="bg-red-50 text-red-600 p-4 rounded-xl text-sm mb-6 border border-red-200 flex items-center shadow-sm">
+            <span class="material-symbols-outlined mr-2">error</span>
+            {{ error }}
+        </div>
+        {% endif %}
+        {% if success %}
+        <div class="bg-green-50 text-green-700 p-4 rounded-xl text-sm mb-6 border border-green-200 flex items-center shadow-sm">
+            <span class="material-symbols-outlined mr-2">check_circle</span>
+            {{ success }}
+        </div>
+        {% endif %}
+
+        <!-- Feedback Tab -->
+        <div id="feedback-tab" class="tab-content block">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-800">Disliked Responses</h1>
+                    <p class="text-sm text-slate-500">Review AI responses flagged as inaccurate by users.</p>
+                </div>
+            </div>
+            
+            <div class="space-y-4">
+                {% for item in feedback_items %}
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="bg-slate-50 px-6 py-3 border-b border-slate-100 flex justify-between items-center">
+                        <div class="flex items-center space-x-3 text-sm text-slate-500">
+                            <span class="material-symbols-outlined text-[18px]">forum</span>
+                            <span class="font-medium">{{ item.chat_title }}</span>
+                            <span>•</span>
+                            <span>{{ item.user_email }}</span>
+                        </div>
+                        <span class="text-xs text-slate-400 font-medium">{{ item.timestamp }}</span>
+                    </div>
+                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <div class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">User Prompt</div>
+                            <div class="bg-blue-50 text-slate-800 p-4 rounded-xl text-sm">{{ item.user_prompt }}</div>
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center"><span class="text-red-500 mr-1 material-symbols-outlined text-[14px]">thumb_down</span> AI Response</div>
+                            <div class="bg-slate-50 border border-slate-200 text-slate-800 p-4 rounded-xl text-sm max-h-64 overflow-y-auto">{{ item.ai_response }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center text-slate-500">
+                    <span class="material-symbols-outlined text-4xl mb-3 opacity-50">thumb_up</span>
+                    <h3 class="text-lg font-medium">All Good!</h3>
+                    <p class="text-sm mt-1">No disliked responses to review.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Train Tab -->
+        <div id="train-tab" class="tab-content hidden">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-800">Knowledge Base</h1>
+                    <p class="text-sm text-slate-500">Upload CSV, JSON, or TXT files to train the AI with organizational protocols.</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
+                <form action="{{ url_for('admin.train') }}" method="POST" enctype="multipart/form-data" class="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-xl p-10 bg-slate-50 hover:bg-slate-100 transition cursor-pointer" onclick="document.getElementById('file-upload').click()">
+                    <span class="material-symbols-outlined text-5xl text-admin-accent mb-3">cloud_upload</span>
+                    <h3 class="text-lg font-bold text-slate-700">Upload Knowledge File</h3>
+                    <p class="text-sm text-slate-500 text-center max-w-sm mt-2 mb-4">Click to select files. The AI will automatically read and apply these rules to conversations.</p>
+                    <input type="file" name="knowledge_file" id="file-upload" class="hidden" onchange="this.form.submit()" accept=".csv,.json,.txt">
+                    <button type="button" class="bg-admin-dark text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 transition">Select File</button>
+                </form>
+            </div>
+
+            <h3 class="text-lg font-bold text-slate-800 mb-4">Active Files</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {% for file in knowledge_files %}
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex justify-between items-center group">
+                    <div class="flex items-center space-x-3 overflow-hidden">
+                        <div class="w-10 h-10 rounded-lg bg-green-50 text-green-600 flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined">description</span>
+                        </div>
+                        <div class="truncate">
+                            <div class="text-sm font-bold text-slate-800 truncate">{{ file }}</div>
+                            <div class="text-[10px] text-slate-500 uppercase font-medium mt-0.5">Active Context</div>
+                        </div>
+                    </div>
+                    <form action="{{ url_for('admin.delete_file', filename=file) }}" method="POST">
+                        <button type="submit" class="text-slate-400 hover:text-red-500 p-2 opacity-0 group-hover:opacity-100 transition">
+                            <span class="material-symbols-outlined text-[18px]">delete</span>
+                        </button>
+                    </form>
+                </div>
+                {% else %}
+                <div class="col-span-full bg-slate-50 rounded-xl p-6 text-center text-slate-500 text-sm border border-slate-200">
+                    No active knowledge base files.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Admins Tab -->
+        <div id="admins-tab" class="tab-content hidden">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-800">Manage Administrators</h1>
+                    <p class="text-sm text-slate-500">Add new authorized personnel to the portal.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Add Form -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-3">Create New Admin</h3>
+                    <form action="{{ url_for('admin.add_admin') }}" method="POST" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Email Address</label>
+                            <input type="email" name="email" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-admin-accent transition text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Secure Password</label>
+                            <input type="password" name="password" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-admin-accent transition text-sm">
+                        </div>
+                        <button type="submit" class="w-full bg-admin-accent hover:bg-indigo-600 text-white font-medium py-2.5 rounded-xl transition text-sm mt-2">Create Admin Entry</button>
+                    </form>
+                </div>
+
+                <!-- Admin List -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-3">Authorized Personnel</h3>
+                    <div class="space-y-3">
+                        {% for admin in admins %}
+                        <div class="flex items-center space-x-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <div class="w-8 h-8 rounded-full bg-admin-dark text-white flex items-center justify-center text-xs font-bold uppercase shrink-0">
+                                {{ admin.email[0] }}
+                            </div>
+                            <div>
+                                <div class="text-sm font-bold text-slate-800">{{ admin.email }}</div>
+                                <div class="text-[10px] text-slate-500 font-medium tracking-wide">ID: #{{ admin.id }} • Added {{ admin.created_at.strftime('%Y-%m-%d') }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showTab(tabId) {
+        // Hide all
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('block'));
+        
+        // Reset nav styles
+        document.querySelectorAll('.nav-btn').forEach(el => {
+            el.classList.remove('bg-indigo-500/20', 'text-indigo-400');
+            el.classList.add('text-slate-400');
+        });
+
+        // Show target
+        document.getElementById(tabId).classList.remove('hidden');
+        document.getElementById(tabId).classList.add('block');
+        
+        // Style target nav
+        const activeNav = document.getElementById('nav-' + tabId);
+        activeNav.classList.remove('text-slate-400');
+        activeNav.classList.add('bg-indigo-500/20', 'text-indigo-400');
+    }
+</script>
+{% endblock %}

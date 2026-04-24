@@ -237,6 +237,14 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <div class="font-bold text-xs text-brand-dark dark:text-blue-400">Clara AI</div>
                             </div>
                             <div class="ai-bubble-content text-sm md:text-[15px] leading-relaxed">${marked.parse(msg.content)}</div>
+                            <div class="flex items-center space-x-2 mt-3 pt-2 border-t border-slate-100 dark:border-slate-800/50 feedback-actions" data-message-id="${msg.id}">
+                                <button class="feedback-btn flex items-center justify-center p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition ${msg.feedback === 1 ? 'text-blue-500' : 'text-slate-400'}" data-value="1" title="Helpful">
+                                    <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' ${msg.feedback === 1 ? '1' : '0'}">thumb_up</span>
+                                </button>
+                                <button class="feedback-btn flex items-center justify-center p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition ${msg.feedback === -1 ? 'text-red-500' : 'text-slate-400'}" data-value="-1" title="Inaccurate or Unhelpful">
+                                    <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' ${msg.feedback === -1 ? '1' : '0'}">thumb_down</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -442,6 +450,14 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <div class="font-bold text-xs text-brand-dark dark:text-blue-400">Clara AI</div>
                                 </div>
                                 <div class="ai-bubble-content text-sm md:text-[15px] leading-relaxed">${marked.parse(data.response)}</div>
+                                <div class="flex items-center space-x-2 mt-3 pt-2 border-t border-slate-100 dark:border-slate-800/50 feedback-actions" data-message-id="${data.message_id}">
+                                    <button class="feedback-btn flex items-center justify-center p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition text-slate-400 hover:text-blue-500" data-value="1" title="Helpful">
+                                        <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 0">thumb_up</span>
+                                    </button>
+                                    <button class="feedback-btn flex items-center justify-center p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition text-slate-400 hover:text-red-500" data-value="-1" title="Inaccurate or Unhelpful">
+                                        <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 0">thumb_down</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     `;
@@ -517,4 +533,51 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(scramble, 400);
         tagline.addEventListener('mouseenter', scramble);
     }
+
+    // Handle Feedback logic
+    document.body.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.feedback-btn');
+        if (!btn) return;
+
+        e.stopPropagation();
+        const container = btn.closest('.feedback-actions');
+        const messageId = container.dataset.messageId;
+        if (!messageId) return;
+        
+        const value = parseInt(btn.dataset.value);
+
+        try {
+            const res = await fetch(`/api/message/${messageId}/feedback`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ feedback: value })
+            });
+            const data = await res.json();
+            if (data.success) {
+                const upBtn = container.querySelector('[data-value="1"]');
+                const downBtn = container.querySelector('[data-value="-1"]');
+                const upIcon = upBtn.querySelector('span');
+                const downIcon = downBtn.querySelector('span');
+                
+                if (value === 1) {
+                    upBtn.classList.remove('text-slate-400');
+                    upBtn.classList.add('text-blue-500');
+                    downBtn.classList.remove('text-red-500');
+                    downBtn.classList.add('text-slate-400');
+                    upIcon.style.fontVariationSettings = "'FILL' 1";
+                    downIcon.style.fontVariationSettings = "'FILL' 0";
+                } else {
+                    downBtn.classList.remove('text-slate-400');
+                    downBtn.classList.add('text-red-500');
+                    upBtn.classList.remove('text-blue-500');
+                    upBtn.classList.add('text-slate-400');
+                    downIcon.style.fontVariationSettings = "'FILL' 1";
+                    upIcon.style.fontVariationSettings = "'FILL' 0";
+                }
+            }
+        } catch(err) {
+            console.error("Feedback error", err);
+        }
+    });
+
 });

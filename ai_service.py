@@ -5,7 +5,8 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
-load_dotenv()
+basedir = os.path.abspath(os.path.dirname(__file__))
+load_dotenv(os.path.join(basedir, '.env'))
 
 ai_logger = logging.getLogger('ai_logger')
 
@@ -98,11 +99,26 @@ def generate_response(structured_json, chat_history_text=""):
         
     answer_model = 'gemini-3.1-flash-lite-preview'
     
+    # Load Admin Knowledge Base Files
+    knowledge_dir = os.path.join(os.path.dirname(__file__), 'static', 'uploads', 'knowledge_base')
+    knowledge_context = ""
+    if os.path.exists(knowledge_dir):
+        for filename in os.listdir(knowledge_dir):
+            file_path = os.path.join(knowledge_dir, filename)
+            if os.path.isfile(file_path):
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        knowledge_context += f"\n--- Admin Knowledge: {filename} ---\n{f.read()}\n"
+                except Exception as e:
+                    ai_logger.error(f"Failed to read knowledge base file {filename}: {e}")
+
+    kb_section = f"\n\nADMIN KNOWLEDGE BASE DIRECTIVES:\n{knowledge_context}" if knowledge_context else ""
+
     system_instruction = f"""
     You are Clara AI, your personal IT Support Chatbot.
     You answer intelligently, professionally, and succinctly in markdown format. 
     You have been provided with the user's analyzed intent via JSON natively. 
-    Use this JSON explicitly to target their needs gracefully. Do NOT mention that you received JSON or were passed data from another bot.
+    Use this JSON explicitly to target their needs gracefully. Do NOT mention that you received JSON or were passed data from another bot.{kb_section}
     
     CHAT HISTORY:
     {chat_history_text if chat_history_text else 'No previous history.'}

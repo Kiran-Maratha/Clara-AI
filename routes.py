@@ -37,17 +37,20 @@ def send_otp_email(to_email, otp):
     body = f"Identity requested.\n\nYour Clara AI secure verification code is: {otp}\n\nThis code will expire natively in 10 minutes."
     msg.attach(MIMEText(body, 'plain'))
 
-    try:
-        server = smtplib.SMTP('smtp.gmail.com', 587)
-        server.starttls()
-        server.login(sender_email, sender_password)
-        text = msg.as_string()
-        server.sendmail(sender_email, to_email, text)
-        server.quit()
-        return True
-    except Exception as e:
-        print(f"Error sending email: {e}")
-        return False
+    for attempt in range(3):
+        try:
+            server = smtplib.SMTP('smtp.gmail.com', 587, timeout=15)
+            server.starttls()
+            server.login(sender_email, sender_password)
+            text = msg.as_string()
+            server.sendmail(sender_email, to_email, text)
+            server.quit()
+            return True
+        except Exception as e:
+            print(f"Error sending email (attempt {attempt + 1}/3): {e}")
+            time.sleep(2)
+            
+    return False
 
 # Detects potential SQL injection or XSS patterns in input strings.
 def is_malicious(value):
@@ -187,8 +190,10 @@ def change_password():
             session['otp_time'] = time.time()
             session['otp_action'] = 'change_password'
             
-            send_otp_email(g.user.email, otp)
-            return redirect(url_for('auth.verify_otp'))
+            if send_otp_email(g.user.email, otp):
+                return redirect(url_for('auth.verify_otp'))
+            else:
+                return render_template('change_password.html', error="Failed to send verification email. Please try again.")
             
         return render_template('change_password.html', error="Secure passwords do not sequentially align.")
         
@@ -281,6 +286,7 @@ def chat():
     return jsonify({
         "response": ai_response,
         "chat_id": chat_session.id,
+        "message_id": ai_msg_entry.id,
         "title": chat_session.title
     })
 
@@ -318,10 +324,35 @@ def get_chat_messages(chat_id):
     if not chat_session:
         return jsonify({"error": "Not found"}), 404
     messages = [
-        {"sender": m.sender, "content": m.content}
+        {"id": m.id, "sender": m.sender, "content": m.content, "feedback": m.feedback}
         for m in chat_session.messages
     ]
     return jsonify({"messages": messages, "title": chat_session.title})
+
+# Records user feedback (like/dislike) for a specific AI message.
+@main_bp.route('/api/message/<int:message_id>/feedback', methods=['POST'])
+def feedback_message(message_id):
+    if not g.user:
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Invalid payload"}), 400
+        
+    value = data.get('feedback')
+    if value not in [1, -1]:
+        return jsonify({"error": "Invalid feedback value"}), 400
+        
+    msg = Message.query.get(message_id)
+    if not msg:
+        return jsonify({"error": "Message not found"}), 404
+        
+    if msg.chat.user_id != g.user.id:
+        return jsonify({"error": "Forbidden"}), 403
+        
+    msg.feedback = value
+    db.session.commit()
+    return jsonify({"success": True, "feedback": value})
 
 # Authenticates users and initiates the 2FA cycle via email.
 @auth_bp.route('/login', methods=['GET', 'POST'])
@@ -345,8 +376,11 @@ def login():
         session['otp'] = otp
         session['otp_time'] = time.time()
         session['otp_action'] = 'login'
-        send_otp_email(email, otp)
-        return redirect(url_for('auth.verify_otp'))
+        if send_otp_email(email, otp):
+            return redirect(url_for('auth.verify_otp'))
+        else:
+            session.pop('otp', None)
+            return render_template('login.html', register=False, error="Failed to send verification email. Please check your network connection.")
             
     return render_template('login.html', register=False)
 
@@ -384,8 +418,11 @@ def register():
         session['otp_time'] = time.time()
         session['otp_action'] = 'register'
         
-        send_otp_email(email, otp)
-        return redirect(url_for('auth.verify_otp'))
+        if send_otp_email(email, otp):
+            return redirect(url_for('auth.verify_otp'))
+        else:
+            session.pop('otp', None)
+            return render_template('login.html', register=True, error="Failed to send verification email. Please check your network connection.")
     return render_template('login.html', register=True)
     
 # Validates the 6-digit verification code to complete login, registration, or reset flows.
@@ -459,8 +496,10 @@ def reset_password():
                 session['reset_email'] = email
                 session['reset_otp'] = otp
                 session['reset_otp_time'] = time.time()
-                send_otp_email(email, otp)
-                return render_template('reset_password.html', step='otp')
+                if send_otp_email(email, otp):
+                    return render_template('reset_password.html', step='otp')
+                else:
+                    return render_template('reset_password.html', step='email', error="Failed to send verification email. Please check your network connection.")
             return render_template('reset_password.html', step='email', error="Email not bound to active schemas.")
             
         elif action == 'verify_otp':

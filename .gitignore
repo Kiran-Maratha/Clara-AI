@@ -18,6 +18,8 @@ logs/
 static/uploads/*
 !static/uploads/.gitkeep
 
+seed_admin.py
+
 # OS
 .DS_Store
 Thumbs.db

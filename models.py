@@ -15,6 +15,13 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     chats = db.relationship('Chat', backref='user', lazy=True, cascade="all, delete-orphan")
 
+# Dedicated schema for administrative access to prevent unauthorized escalation.
+class Admin(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(150), unique=True, nullable=False)
+    password = db.Column(db.String(150), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
 # Manages unique conversation sessions between a user and the AI.
 class Chat(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -30,4 +37,5 @@ class Message(db.Model):
     chat_id = db.Column(db.Integer, db.ForeignKey('chat.id'), nullable=False)
     sender = db.Column(db.String(50), nullable=False)
     content = db.Column(db.Text, nullable=False)
+    feedback = db.Column(db.Integer, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
