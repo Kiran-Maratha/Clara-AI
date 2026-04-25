@@ -2,14 +2,14 @@
 
 Clara AI is a professional, high-performance IT support chat platform powered by the Gemini AI API. It features a responsive, premium UI, multi-step authentication, and secure chat history management.
 
-## ✨ Features
+## Features
 - **Hacker-style UI**: Character-scramble 'decryption' animations and premium dark/light themes.
 - **Multimodal AI**: Integrated Gemini AI for intelligent IT troubleshooting with file upload support.
 - **Secure Auth**: Multi-step OTP authentication and password recovery systems.
 - **Smart History**: Star and manage conversations with secure deletion and non-persistent error handling.
 - **Modern Architecture**: Clean separation of logic (JS), styling (CSS), and backend (Python/Flask/SQLAlchemy).
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Python 3.10+
