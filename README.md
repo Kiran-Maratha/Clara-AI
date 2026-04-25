@@ -34,7 +34,7 @@ Clara AI is a professional, high-performance IT support chat platform powered by
    python app.py
    ```
 
-## 🛠️ Tech Stack
+## Tech Stack
 - **Backend**: Python, Flask, SQLAlchemy
 - **Frontend**: Vanilla HTML/JS, Tailwind CSS
 - **AI**: Google Generative AI (Gemini API)
