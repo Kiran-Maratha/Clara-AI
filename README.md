@@ -1,13 +1,4 @@
-# Clara AI - Intelligent IT Support Platform
-
-Clara AI is a professional, high-performance IT support chat platform powered by the Gemini AI API. It features a responsive, premium UI, multi-step authentication, and secure chat history management.
-
-## Features
-- **Hacker-style UI**: Character-scramble 'decryption' animations and premium dark/light themes.
-- **Multimodal AI**: Integrated Gemini AI for intelligent IT troubleshooting with file upload support.
-- **Secure Auth**: Multi-step OTP authentication and password recovery systems.
-- **Smart History**: Star and manage conversations with secure deletion and non-persistent error handling.
-- **Modern Architecture**: Clean separation of logic (JS), styling (CSS), and backend (Python/Flask/SQLAlchemy).
+# Clara AI - AI-Driven IT Support Chatbot
 
 ## Getting Started
 
@@ -38,10 +29,10 @@ Clara AI is a professional, high-performance IT support chat platform powered by
 - **Backend**: Python, Flask, SQLAlchemy
 - **Frontend**: Vanilla HTML/JS, Tailwind CSS
 - **AI**: Google Generative AI (Gemini API)
-- Contributors
+
 
 ## Contributors
-- **Karry** – Project Lead / Developer
-- **AK** - Backend Development
-- **AMH** – Frontend Development
-- **Hoon** - Frontend Development
+- **[Karry](https://github.com/Kiran-Maratha)** – Project Lead / Developer
+- **[AK]()** - Backend Development
+- **[AMH](https://github.com/AungMinHeinn)** – Frontend Development
+- **[Hoon]()** - Frontend Development
